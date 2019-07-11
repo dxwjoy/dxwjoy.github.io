@@ -1,0 +1,48 @@
+@startuml
+title Thread State Diagram
+
+state "NEW" as new
+state "RUNNABLE" as run {
+    state "Runnable" as swap
+    state "Running" as cpu
+    cpu --> swap : 1.Thread.yield() \n 2.CPU schedule swap
+    swap --> cpu : Selected by scheduler
+}
+state "BLOCKED" as bl
+state "WAITING" as wait
+state "TIMED_WAITING" as twait
+state "TERMINATED" as term
+
+[*] --> new : new Thread()
+new -right-> run : thread.start()
+run -up-> twait : 1.thread.sleep 2.object.wait(long) \n\
+3.thread.join(long)
+
+twait --> run : After the time
+run -right-> wait : 1.obj.wait() 2.thread.join()
+wait --> bl : After wait and join
+run --> bl : 1.thread.suspend()
+bl --> run : 1.thread.resume() \n\
+2.obj.notify()/obj.notifyAll() \n\
+3.thread.interrupt()
+
+bl --> term
+run --> term : 1.Lifecycle end 2.thread.stop() \n\
+3.Uncaught exception
+
+term --> [*]
+
+note "States in Java API: \n\
+1.NEW \n\
+2.RUNNABLE \n\
+3.BLOCKED \n\
+4.WAITING \n\
+5.TIMED_WAITING \n\
+6.TERMINATED" as N1
+
+note "Deprecated Methods: \n\
+1.thread.suspend() \n\
+2.thread.resume() \n\
+3.thread.stop()" as N2
+
+@enduml
